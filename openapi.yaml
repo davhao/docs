@@ -1,0 +1,216 @@
+openapi: 3.0.0
+info:
+  title: Chapel-Zill API
+  version: 1.0.0
+  description: API documentation for Chapel-Zill service
+
+servers:
+  - url: https://roomadillo.com/api
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Development server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        uid:
+          type: string
+          description: Firebase user ID
+        email:
+          type: string
+          format: email
+    Listing:
+      type: object
+      properties:
+        _id:
+          type: string
+        rooms:
+          type: array
+          items:
+            type: object
+            properties:
+              rent:
+                type: number
+              bookingId:
+                type: string
+              availability:
+                type: object
+                properties:
+                  endDate:
+                    type: string
+                    format: date-time
+        updated:
+          type: string
+          format: date-time
+    Booking:
+      type: object
+      properties:
+        listingID:
+          type: string
+        userID:
+          type: string
+        room:
+          type: number
+        date:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+
+paths:
+  /users/{uid}:
+    get:
+      summary: Get user information
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  firebaseUser:
+                    type: object
+                  mongoUser:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listingsBySchool/{schoolName}:
+    get:
+      summary: Get listings by school
+      parameters:
+        - name: schoolName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  listingsReq:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Listing'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /listings/saved/{uid}:
+    get:
+      summary: Get saved listings for a user
+      parameters:
+        - name: uid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Saved listings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    listing:
+                      $ref: '#/components/schemas/Listing'
+
+  /users/saveListing:
+    post:
+      summary: Save or unsave a listing for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userUid:
+                  type: string
+                listingId:
+                  type: string
+                posterUID:
+                  type: string
+      responses:
+        '200':
+          description: Listing saved/unsaved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+
+  /listings:
+    post:
+      summary: Create a new listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Listing'
+      responses:
+        '200':
+          description: Listing created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
+
+  /listings/edit/{id}:
+    post:
+      summary: Edit an existing listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newListing:
+                  $ref: '#/components/schemas/Listing'
+                oldListing:
+                  $ref: '#/components/schemas/Listing'
+      responses:
+        '200':
+          description: Listing updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Listing'
